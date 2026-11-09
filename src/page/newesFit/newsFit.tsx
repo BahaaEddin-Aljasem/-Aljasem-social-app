@@ -80,7 +80,7 @@ export default function NewFitness() {
     if (!body.trim() && !mediaDataUrl) return;
     setSubmitting(true);
     try {
-      await createPost({
+      const createdPost = await createPost({
         body: body.trim(),
         mediaDataUrl: mediaDataUrl || undefined,
         mediaFile: mediaFile || undefined,
@@ -91,8 +91,14 @@ export default function NewFitness() {
       setMediaDataUrl("");
       setMediaFile(null);
       setMediaType(null);
-      toast.success("Post created");
-      await load();
+      const localOnly = createdPost._id.startsWith("local-");
+      if (localOnly) {
+        setPosts((prev) => [createdPost, ...prev]);
+        toast.info("Posted locally. Server upload failed, so this post is visible in your current session.");
+      } else {
+        toast.success("Post created");
+        await load();
+      }
     } catch {
       toast.error("Failed to create post");
     } finally {

@@ -12,8 +12,13 @@ const readLocalPosts = (): PostType[] => {
   }
 };
 
-const saveLocalPosts = (posts: PostType[]) => {
-  localStorage.setItem(LOCAL_POSTS_KEY, JSON.stringify(posts));
+const saveLocalPosts = (posts: PostType[]): boolean => {
+  try {
+    localStorage.setItem(LOCAL_POSTS_KEY, JSON.stringify(posts));
+    return true;
+  } catch {
+    return false;
+  }
 };
 
 const updateLocalPostBody = (postId: string, body: string) => {
@@ -209,7 +214,7 @@ export const createPost = async (input: CreatePostInput): Promise<PostType> => {
     }
 
     try {
-      const response = await apiClient.post("/posts", formData);
+      const response = await apiClient.post("/posts", formData, { timeout: 0 });
       const created =
         response?.data?.post ?? response?.data?.data?.post ?? response?.data?.data ?? response?.data;
       if (created?._id) return normalizePosts([created])[0];
@@ -221,12 +226,16 @@ export const createPost = async (input: CreatePostInput): Promise<PostType> => {
   const localUsername = localStorage.getItem("route_username") || "You";
   const localName = localStorage.getItem("route_name") || localUsername;
   const localUserId = localStorage.getItem("route_user_id") || "local-user";
+  const localVideoPreview =
+    selectedType === "video" && selectedFile ? URL.createObjectURL(selectedFile) : undefined;
+  const localImagePreview =
+    selectedType === "image" ? selectedDataUrl || undefined : undefined;
 
   const newPost: PostType = {
     _id: `local-${Date.now()}`,
     body: text,
-    image: selectedType === "image" ? selectedDataUrl || undefined : undefined,
-    video: selectedType === "video" ? selectedDataUrl || undefined : undefined,
+    image: localImagePreview,
+    video: selectedType === "video" ? localVideoPreview : undefined,
     privacy: payload.privacy || "public",
     user: {
       _id: localUserId,
@@ -241,7 +250,12 @@ export const createPost = async (input: CreatePostInput): Promise<PostType> => {
   };
 
   const existing = readLocalPosts();
-  saveLocalPosts([newPost, ...existing]);
+  const lightweightPost: PostType = {
+    ...newPost,
+    image: newPost.image?.startsWith("data:") ? undefined : newPost.image,
+    video: newPost.video,
+  };
+  saveLocalPosts([lightweightPost, ...existing]);
   return newPost;
 };
 

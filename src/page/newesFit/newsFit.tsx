@@ -85,7 +85,7 @@ export default function NewFitness() {
         mediaDataUrl: mediaDataUrl || undefined,
         mediaFile: mediaFile || undefined,
         mediaType: mediaType || undefined,
-        privacy: privacy === "Only me" ? "private" : "public",
+        privacy: privacy === "Only me" ? "private" : privacy === "Followers" ? "followers" : "public",
       });
       setBody("");
       setMediaDataUrl("");

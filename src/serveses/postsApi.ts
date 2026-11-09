@@ -1,5 +1,6 @@
 import apiClient from "./apiClient";
 import type { PostType } from "../tyeps/post";
+import { baseUrl } from "../const/environment";
 
 const LOCAL_POSTS_KEY = "route_local_posts";
 
@@ -35,6 +36,43 @@ const updateLocalPostPrivacy = (postId: string, privacy: "public" | "followers" 
 const asRecord = (value: unknown): Record<string, unknown> | null =>
   typeof value === "object" && value !== null ? (value as Record<string, unknown>) : null;
 
+const toAbsoluteMediaUrl = (value: unknown): string | undefined => {
+  if (typeof value !== "string") return undefined;
+  const trimmed = value.trim();
+  if (!trimmed) return undefined;
+  if (trimmed.startsWith("data:") || trimmed.startsWith("blob:")) return trimmed;
+  if (/^https?:\/\//i.test(trimmed)) return trimmed;
+  if (trimmed.startsWith("//")) return `https:${trimmed}`;
+  if (trimmed.startsWith("/")) return `${baseUrl}${trimmed}`;
+  return `${baseUrl}/${trimmed}`;
+};
+
+const firstString = (...values: unknown[]): string | undefined => {
+  for (const value of values) {
+    if (typeof value === "string" && value.trim()) return value;
+  }
+  return undefined;
+};
+
+const readAttachmentUrl = (value: unknown): string | undefined => {
+  if (typeof value === "string") return value;
+  if (Array.isArray(value)) {
+    for (const item of value) {
+      const record = asRecord(item);
+      const candidate = firstString(
+        record?.url,
+        record?.path,
+        record?.secure_url,
+        record?.src,
+      );
+      if (candidate) return candidate;
+    }
+    return undefined;
+  }
+  const record = asRecord(value);
+  return firstString(record?.url, record?.path, record?.secure_url, record?.src);
+};
+
 const normalizePosts = (payload: unknown): PostType[] => {
   const root = asRecord(payload);
   const data = asRecord(root?.data);
@@ -50,7 +88,47 @@ const normalizePosts = (payload: unknown): PostType[] => {
 
   return asArray.map((item) => {
     const maybeItem = asRecord(item);
-    return (maybeItem?.post ?? item) as PostType;
+    const raw = asRecord(maybeItem?.post ?? item);
+    if (!raw) return (maybeItem?.post ?? item) as PostType;
+
+    const media = asRecord(raw.media);
+    const attachmentsUrl = readAttachmentUrl(raw.attachments);
+    const mediaUrl = readAttachmentUrl(media);
+
+    const imageCandidate = firstString(
+      raw.image,
+      raw.photo,
+      raw.thumbnail,
+      media?.image,
+      attachmentsUrl,
+      mediaUrl
+    );
+
+    const videoCandidate = firstString(
+      raw.video,
+      raw.videoUrl,
+      raw.video_url,
+      media?.video,
+      media?.videoUrl,
+      media?.video_url,
+      raw.file
+    );
+
+    const image = toAbsoluteMediaUrl(imageCandidate);
+    const video = toAbsoluteMediaUrl(videoCandidate);
+    const privacyRaw = firstString(raw.privacy, raw.visibility, raw.audience);
+    const privacy =
+      privacyRaw === "private" || privacyRaw === "followers" || privacyRaw === "public"
+        ? privacyRaw
+        : undefined;
+
+    const merged: PostType = {
+      ...(raw as unknown as PostType),
+      image,
+      video,
+      ...(privacy ? { privacy } : {}),
+    };
+    return merged;
   });
 };
 
@@ -117,24 +195,25 @@ export const createPost = async (input: CreatePostInput): Promise<PostType> => {
       ? "video"
       : "image");
 
-  const formData = new FormData();
-  formData.append("body", text);
-  formData.append("privacy", payload.privacy || "public");
+  const uploadFile = selectedFile || (selectedDataUrl ? await dataUrlToFile(selectedDataUrl) : null);
+  const uploadKeys = selectedType === "video" ? ["video", "media", "file", "image"] : ["image", "media", "file"];
 
-  if (selectedFile) {
-    formData.append(selectedType === "video" ? "video" : "image", selectedFile);
-  } else if (selectedDataUrl) {
-    const file = await dataUrlToFile(selectedDataUrl);
-    formData.append(selectedType === "video" ? "video" : "image", file);
-  }
+  for (const uploadKey of uploadKeys) {
+    const formData = new FormData();
+    formData.append("body", text);
+    formData.append("privacy", payload.privacy || "public");
+    if (uploadFile) {
+      formData.append(uploadKey, uploadFile);
+    }
 
-  try {
-    const response = await apiClient.post("/posts", formData);
-    const created =
-      response?.data?.post ?? response?.data?.data?.post ?? response?.data?.data ?? response?.data;
-    if (created?._id) return created as PostType;
-  } catch {
-    // Keep local fallback for temporary API upload failures.
+    try {
+      const response = await apiClient.post("/posts", formData);
+      const created =
+        response?.data?.post ?? response?.data?.data?.post ?? response?.data?.data ?? response?.data;
+      if (created?._id) return normalizePosts([created])[0];
+    } catch {
+      // Try the next upload key format.
+    }
   }
 
   const localUsername = localStorage.getItem("route_username") || "You";

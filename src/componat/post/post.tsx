@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "react-toastify";
 import type { PostType } from "../../tyeps/post";
+import { baseUrl } from "../../const/environment";
 import {
   addPostComment,
   deletePost,
@@ -91,7 +92,18 @@ function formatRelativeTime(dateString: string): string {
 function isVideoSource(url?: string): boolean {
   if (!url) return false;
   if (url.startsWith("data:video/")) return true;
-  return /\.(mp4|webm|ogg|mov|m4v)(\?|#|$)/i.test(url);
+  return /(\/video\/|\/videos\/|video=|\.mp4|\.webm|\.ogg|\.mov|\.m4v)/i.test(url);
+}
+
+function resolveMediaSource(url?: string): string | undefined {
+  if (!url) return undefined;
+  const trimmed = url.trim();
+  if (!trimmed) return undefined;
+  if (trimmed.startsWith("data:") || trimmed.startsWith("blob:")) return trimmed;
+  if (/^https?:\/\//i.test(trimmed)) return trimmed;
+  if (trimmed.startsWith("//")) return `https:${trimmed}`;
+  if (trimmed.startsWith("/")) return `${baseUrl}${trimmed}`;
+  return `${baseUrl}/${trimmed}`;
 }
 
 function LikeIcon() {
@@ -184,8 +196,8 @@ export default function Post({ post }: { post: PostType }) {
   const commentsCount = Math.max(baseComments, interaction.comments.length);
   const sharesCount = Math.max(0, baseShares + interaction.sharesDelta);
   const topComment = interaction.comments[0];
-  const mediaSource = post.video || post.image;
-  const hasVideo = !!post.video || isVideoSource(post.image);
+  const mediaSource = resolveMediaSource(post.video || post.image);
+  const hasVideo = !!post.video || isVideoSource(mediaSource || post.image);
 
   const currentUser = useMemo(() => localStorage.getItem("route-posts-username") || "You", []);
   const currentPhoto = useMemo(() => localStorage.getItem("route_profile_avatar") || undefined, []);

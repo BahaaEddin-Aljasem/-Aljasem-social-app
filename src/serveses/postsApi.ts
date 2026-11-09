@@ -15,6 +15,23 @@ const saveLocalPosts = (posts: PostType[]) => {
   localStorage.setItem(LOCAL_POSTS_KEY, JSON.stringify(posts));
 };
 
+const updateLocalPostBody = (postId: string, body: string) => {
+  const current = readLocalPosts();
+  const updated = current.map((post) => (post._id === postId ? { ...post, body } : post));
+  saveLocalPosts(updated);
+};
+
+const removeLocalPost = (postId: string) => {
+  const current = readLocalPosts();
+  saveLocalPosts(current.filter((post) => post._id !== postId));
+};
+
+const updateLocalPostPrivacy = (postId: string, privacy: "public" | "followers" | "private") => {
+  const current = readLocalPosts();
+  const updated = current.map((post) => (post._id === postId ? { ...post, privacy } : post));
+  saveLocalPosts(updated);
+};
+
 const asRecord = (value: unknown): Record<string, unknown> | null =>
   typeof value === "object" && value !== null ? (value as Record<string, unknown>) : null;
 
@@ -118,6 +135,7 @@ export const createPost = async (input: CreatePostInput): Promise<PostType> => {
     _id: `local-${Date.now()}`,
     body: text,
     image: payload.imageDataUrl || undefined,
+    privacy: payload.privacy || "public",
     user: {
       _id: localUserId,
       name: localName,
@@ -222,4 +240,65 @@ export const addPostComment = async (
 
 export const sharePost = async (postId: string, message = "") => {
   return apiClient.post(`/posts/${postId}/share`, { body: message });
+};
+
+export const updatePostBody = async (postId: string, body: string) => {
+  const text = body.trim();
+  try {
+    const response = await apiClient.put(`/posts/${postId}`, { body: text });
+    return response.data;
+  } catch {
+    try {
+      const response = await apiClient.patch(`/posts/${postId}`, { body: text });
+      return response.data;
+    } catch {
+      updateLocalPostBody(postId, text);
+      return null;
+    }
+  }
+};
+
+export const deletePost = async (postId: string) => {
+  try {
+    await apiClient.delete(`/posts/${postId}`);
+    removeLocalPost(postId);
+    return true;
+  } catch {
+    removeLocalPost(postId);
+    return false;
+  }
+};
+
+export const updatePostPrivacy = async (
+  postId: string,
+  privacy: "public" | "followers" | "private"
+) => {
+  const valuesToTry =
+    privacy === "followers" ? ["followers", "friends", "private"] : [privacy];
+  const payloadKeys = ["privacy", "visibility", "audience"] as const;
+  const methods = ["put", "patch"] as const;
+  const paths = [`/posts/${postId}`, `/posts/${postId}/privacy`];
+
+  for (const value of valuesToTry) {
+    for (const key of payloadKeys) {
+      for (const path of paths) {
+        for (const method of methods) {
+          try {
+            const payload = { [key]: value } as Record<string, string>;
+            const response =
+              method === "put"
+                ? await apiClient.put(path, payload)
+                : await apiClient.patch(path, payload);
+            updateLocalPostPrivacy(postId, privacy);
+            return { synced: true, data: response.data };
+          } catch {
+            // Try next endpoint/payload variant.
+          }
+        }
+      }
+    }
+  }
+
+  updateLocalPostPrivacy(postId, privacy);
+  return { synced: false };
 };

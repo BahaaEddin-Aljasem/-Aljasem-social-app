@@ -10,11 +10,11 @@ export default function Authintro() {
   return (
     <section className="w-full max-w-xl">
       <div className="mb-4 overflow-hidden rounded-2xl border border-[#d1dcff] bg-linear-to-br from-[#072372] via-[#0d2f93] to-[#1a4bc6] shadow-[0_14px_34px_rgba(13,47,147,0.32)]">
-        <div className="relative flex min-h-62.5 items-center justify-center px-6 py-10">
+        <div className="relative flex min-h-[250px] items-center justify-center px-6 py-10">
           <div className="absolute -top-16 right-6 size-44 rounded-full bg-[#3d7cff]/40 blur-3xl" />
           <div className="absolute -bottom-16 left-6 size-48 rounded-full bg-[#7eb6ff]/35 blur-3xl" />
-          <div className="absolute inset-0 bg-linear-to-b from-white/10 via-white/3 to-transparent" />
-          <div className="absolute inset-x-6 bottom-8 h-16 rounded-full bg-white/8 blur-2xl" />
+          <div className="absolute inset-0 bg-linear-to-b from-white/10 via-white/[0.03] to-transparent" />
+          <div className="absolute inset-x-6 bottom-8 h-16 rounded-full bg-white/[0.08] blur-2xl" />
           <div className="relative text-center">
             <p className="text-[74px] leading-none font-black tracking-[0.12em] text-white drop-shadow-[0_12px_24px_rgba(0,0,0,0.35)] sm:text-[84px]">
               ROUTE
@@ -24,7 +24,7 @@ export default function Authintro() {
         </div>
         <div className="border-t border-white/20 bg-[#0a2b86] px-5 py-4">
           <p className="text-center text-sm font-medium text-[#e6eeff]">
-            Social helps you connect, share, and stay close to your friends.
+            Route Posts helps you connect, share, and stay close to your friends.
           </p>
         </div>
       </div>

@@ -17,7 +17,7 @@ export default function Login() {
     formState: { errors, isSubmitting },
   } = useForm<LoginFormValues>({
     resolver: zodResolver(LoginSchema),
-    defaultValues: { login: "bahaaeddin", password: "Bahaa123$" },
+    defaultValues: { login: "", password: "" },
     mode: "onBlur",
   });
 
@@ -44,7 +44,7 @@ export default function Login() {
   }
 
   return (
-    <AuthCard title="Log in to Social" subtitle="Log in and continue your social journey.">
+    <AuthCard title="Log in to Route Posts" subtitle="Log in and continue your social journey.">
       <form className="space-y-3.5" onSubmit={handleSubmit(handleLogin)} noValidate>
         <TextField
           {...register("login")}

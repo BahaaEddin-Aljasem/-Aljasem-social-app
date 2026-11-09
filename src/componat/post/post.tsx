@@ -383,11 +383,7 @@ export default function Post({ post }: { post: PostType }) {
 
     try {
       setUpdatingPost(true);
-      if (!isLocalPost) {
-        await updatePostBody(post._id, nextBody);
-      } else {
-        await updatePostBody(post._id, nextBody);
-      }
+      await updatePostBody(post._id, nextBody);
       toast.success("Post updated");
       setEditingPost(false);
     } catch {
@@ -491,6 +487,13 @@ export default function Post({ post }: { post: PostType }) {
                 >
                   <PrivacyIcon privacy={privacy} />
                   {privacy === "public" ? "Public" : privacy === "followers" ? "Followers" : "Only me"}
+                  <svg
+                    viewBox="0 0 24 24"
+                    className={`size-3.5 transition-transform ${privacyMenuOpen ? "rotate-180" : ""}`}
+                    fill="none"
+                  >
+                    <path d="m6 9 6 6 6-6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                  </svg>
                 </button>
                 {privacyMenuOpen && (
                   <div className="absolute top-7 left-0 z-20 min-w-34.5 overflow-hidden rounded-2xl border border-[#dbe6f5] bg-white py-1.5 shadow-[0_10px_24px_rgba(15,23,42,0.14)]">
@@ -712,7 +715,7 @@ export default function Post({ post }: { post: PostType }) {
 
       {previewImage && (
         <div
-          className="fixed inset-0 z-60 flex items-center justify-center bg-black/85 p-4"
+          className="fixed inset-0 z-[60] flex items-center justify-center bg-black/85 p-4"
           onClick={() => setPreviewImage(null)}
           role="presentation"
         >
@@ -733,7 +736,7 @@ export default function Post({ post }: { post: PostType }) {
       )}
 
       {editingPost && (
-        <div className="fixed inset-0 z-65 flex items-center justify-center bg-black/60 p-4" onClick={() => setEditingPost(false)} role="presentation">
+        <div className="fixed inset-0 z-[65] flex items-center justify-center bg-black/60 p-4" onClick={() => setEditingPost(false)} role="presentation">
           <div
             className="w-full max-w-lg rounded-2xl bg-white p-4 shadow-[0_12px_30px_rgba(0,0,0,0.2)]"
             onClick={(event) => event.stopPropagation()}
@@ -767,12 +770,12 @@ export default function Post({ post }: { post: PostType }) {
 
       {showDeleteConfirm && (
         <div
-          className="fixed inset-0 z-70 flex items-center justify-center bg-black/45 p-4"
+          className="fixed inset-0 z-[70] flex items-center justify-center bg-black/45 p-4"
           onClick={() => setShowDeleteConfirm(false)}
           role="presentation"
         >
           <div
-            className="w-full max-w-135 overflow-hidden rounded-2xl bg-white shadow-[0_18px_45px_rgba(15,23,42,0.25)]"
+            className="w-full max-w-[540px] overflow-hidden rounded-2xl bg-white shadow-[0_18px_45px_rgba(15,23,42,0.25)]"
             onClick={(event) => event.stopPropagation()}
           >
             <div className="flex items-center justify-between border-b border-[#dbe6f5] px-5 py-4">

@@ -109,7 +109,7 @@ export default function NewFitness() {
   }
 
   return (
-    <div className="grid gap-4 lg:grid-cols-[230px_minmax(0,1fr)_290px] xl:grid-cols-[250px_minmax(0,1fr)_310px]">
+    <div className="grid gap-4 lg:grid-cols-[200px_minmax(0,1fr)_240px] xl:grid-cols-[210px_minmax(0,1fr)_260px]">
       <div className="self-start lg:sticky lg:top-20">
         <Sidebar />
       </div>
@@ -153,7 +153,7 @@ export default function NewFitness() {
           )}
           <div className="mt-3 flex items-center justify-between border-t border-[#edf1f7] pt-2">
             <div className="flex items-center gap-4 text-xs text-slate-600">
-              <label className="inline-flex cursor-pointer items-center gap-1.5 rounded-md px-2 py-1 text-[26px] hover:bg-[#f1f5ff]">
+              <label className="inline-flex cursor-pointer items-center gap-1.5 rounded-md px-2 py-1 hover:bg-[#f1f5ff]">
                 <ImageIcon />
                 <span className="text-sm text-slate-600">Photo/video</span>
                 <input type="file" accept="image/*" onChange={handleImageChange} className="hidden" />
@@ -174,7 +174,11 @@ export default function NewFitness() {
           </div>
         </form>
         {loading && <p className="text-center text-slate-500">Loading...</p>}
-        {!loading && posts.length === 0 && <p className="text-center text-slate-500">No posts yet.</p>}
+        {!loading && posts.length === 0 && (
+          <div className="rounded-2xl border border-[#dbe3f1] bg-white px-4 py-10 text-center text-sm text-slate-500 shadow-sm">
+            No posts yet. Be the first one to publish.
+          </div>
+        )}
         {posts.map((p) => (
           <Post key={p._id} post={p} />
         ))}

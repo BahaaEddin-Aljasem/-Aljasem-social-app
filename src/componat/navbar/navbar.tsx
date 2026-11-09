@@ -90,7 +90,7 @@ function Navbar() {
       <div className="mx-auto flex w-full max-w-7xl items-center gap-3 px-3 py-2 md:px-4">
         <div className="mr-auto flex items-center gap-3">
           <div className="grid size-8 place-items-center rounded-lg bg-[#0f4bcf] text-[9px] font-bold text-white">ROUTE</div>
-          <span className="text-2xl font-bold text-[#0f172a] md:text-[32px]">Social</span>
+          <span className="text-lg font-bold text-[#0f172a] md:text-xl">Route Posts</span>
         </div>
         <div className="hidden rounded-2xl border border-[#e3e9f4] bg-[#f8faff] p-1 md:flex">
           <NavLink to="/feed" className={link}>Feed</NavLink>

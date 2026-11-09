@@ -73,32 +73,6 @@ export async function uploadProfilePhoto(file: File): Promise<string> {
   return photo;
 }
 
-export async function uploadCoverPhoto(file: File): Promise<string> {
-  const formData = new FormData();
-  formData.append("coverPhoto", file);
-
-  const attempts: Array<() => Promise<{ data: unknown }>> = [
-    () => apiClient.put("/users/upload-cover", formData),
-    () => apiClient.put("/users/cover", formData),
-    () => apiClient.post("/users/upload-cover", formData),
-  ];
-
-  let lastError: unknown = null;
-
-  for (const attempt of attempts) {
-    try {
-      const { data } = await attempt();
-      const cover = extractPhotoUrl(data, "coverPhoto");
-      if (typeof cover === "string" && cover.trim()) return cover;
-      return "";
-    } catch (error) {
-      lastError = error;
-    }
-  }
-
-  throw lastError instanceof Error ? lastError : new Error("Cover upload failed");
-}
-
 interface ChangePasswordPayload {
   currentPassword: string;
   newPassword: string;

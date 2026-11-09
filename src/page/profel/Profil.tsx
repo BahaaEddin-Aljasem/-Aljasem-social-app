@@ -2,8 +2,8 @@ import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import { toast } from "react-toastify";
 import Post from "../../componat/post/post";
-import { getLocalIdentity, getLocalProfileSettings, saveLocalProfileSettings } from "../../serveses/localProfile";
-import { getProfileData, uploadCoverPhoto, uploadProfilePhoto } from "../../serveses/profileApi";
+import { fileToResizedDataUrl, getLocalIdentity, getLocalProfileSettings, saveLocalProfileSettings } from "../../serveses/localProfile";
+import { getProfileData, uploadProfilePhoto } from "../../serveses/profileApi";
 import { getBookmarkedPosts, getMyPosts } from "../../serveses/postsApi";
 import type { PostType } from "../../tyeps/post";
 import type { ProfileUser } from "../../tyeps/profile";
@@ -20,6 +20,17 @@ export default function Profile() {
   const [photo, setPhoto] = useState(getLocalProfileSettings().photo ?? "");
   const [cover, setCover] = useState(getLocalProfileSettings().cover ?? "");
   const identity = getLocalIdentity();
+  const [viewerOpen, setViewerOpen] = useState(false);
+  const avatarSrc = photo || profile?.photo || "";
+
+  useEffect(() => {
+    if (!viewerOpen) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setViewerOpen(false);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [viewerOpen]);
 
   useEffect(() => {
     let active = true;
@@ -67,16 +78,20 @@ export default function Profile() {
         setPhoto(uploadedPhoto);
         saveLocalProfileSettings({ ...getLocalProfileSettings(), photo: uploadedPhoto });
       } else {
-        const uploadedCover = await uploadCoverPhoto(file);
-        if (uploadedCover) {
-          setCover(uploadedCover);
-          saveLocalProfileSettings({ ...getLocalProfileSettings(), cover: uploadedCover });
-        }
+        const coverDataUrl = await fileToResizedDataUrl(file, 1280);
+        saveLocalProfileSettings({ ...getLocalProfileSettings(), cover: coverDataUrl });
+        setCover(coverDataUrl);
+        toast.success("Cover updated");
+        return;
       }
       const refreshed = await getProfileData();
       setProfile(refreshed);
       toast.success(type === "photo" ? "Profile photo updated" : "Cover updated");
-    } catch {
+    } catch (error) {
+      if (type === "cover" && error instanceof Error && error.message.startsWith("Image is too large")) {
+        toast.error(error.message);
+        return;
+      }
       toast.error(type === "photo" ? "Failed to upload profile photo" : "Failed to upload cover photo");
     }
   }
@@ -87,6 +102,30 @@ export default function Profile() {
 
   return (
     <section className="space-y-4">
+      {viewerOpen && avatarSrc && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label="Profile photo"
+          className="fixed inset-0 z-50 grid place-items-center bg-black/90 p-4"
+          onClick={() => setViewerOpen(false)}
+        >
+          <button
+            type="button"
+            aria-label="Close"
+            className="absolute right-4 top-4 grid size-10 place-items-center rounded-full bg-white/10 text-2xl text-white hover:bg-white/20"
+            onClick={() => setViewerOpen(false)}
+          >
+            ×
+          </button>
+          <img
+            src={avatarSrc}
+            alt={profile?.name ?? identity.username}
+            className="max-h-full max-w-full rounded-lg object-contain"
+            onClick={(e) => e.stopPropagation()}
+          />
+        </div>
+      )}
       <article className="overflow-hidden rounded-2xl border border-[#e6ebf3] bg-white shadow-sm">
         <div className="relative h-48 overflow-hidden bg-linear-to-r from-[#1f2d4d] via-[#27436f] to-[#5c97cf]">
           {cover && <img src={cover} alt="Cover" className="size-full object-cover" />}
@@ -108,9 +147,12 @@ export default function Profile() {
                 </div>
                 <button
                   type="button"
-                  className="absolute bottom-0 left-0 grid size-8 place-items-center rounded-full border border-[#e4ebf6] bg-white text-[#2563eb] shadow"
+                  aria-label="View photo"
+                  disabled={!avatarSrc}
+                  onClick={() => setViewerOpen(true)}
+                  className="absolute bottom-0 left-0 grid size-8 shrink-0 place-items-center overflow-hidden rounded-full border border-[#e4ebf6] bg-white text-[#2563eb] shadow disabled:opacity-50"
                 >
-                  <svg viewBox="0 0 24 24" className="size-4" fill="none">
+                  <svg viewBox="0 0 24 24" width="16" height="16" className="block shrink-0" fill="none">
                     <path d="M8 4H4v4M16 4h4v4M8 20H4v-4M20 16v4h-4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
                   </svg>
                 </button>

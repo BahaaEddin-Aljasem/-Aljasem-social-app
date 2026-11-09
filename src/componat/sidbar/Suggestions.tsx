@@ -134,7 +134,6 @@ export default function Suggestions() {
               </div>
               <div className="mt-2 flex items-center gap-2">
                 <span className="rounded-full bg-[#f1f5f9] px-2 py-0.5 text-xs font-semibold text-[#6b7e99]">{item.followers} followers</span>
-                <span className="rounded-full bg-[#e8f1ff] px-2 py-0.5 text-xs font-bold text-[#1f73ff]">{item.mutual} mutual</span>
               </div>
             </div>
           ))}

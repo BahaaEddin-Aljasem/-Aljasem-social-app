@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "react-toastify";
 import type { PostType } from "../../tyeps/post";
 import { baseUrl } from "../../const/environment";
+import apiClient from "../../serveses/apiClient";
 import {
   addPostComment,
   deletePost,
@@ -181,6 +182,7 @@ export default function Post({ post }: { post: PostType }) {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [privacyMenuOpen, setPrivacyMenuOpen] = useState(false);
   const [updatingPrivacy, setUpdatingPrivacy] = useState(false);
+  const [resolvedVideo, setResolvedVideo] = useState<{ source: string; url: string } | null>(null);
   const [privacy, setPrivacy] = useState<PrivacyValue>(() => {
     const stored = localStorage.getItem(privacyKey(post._id));
     if (stored === "public" || stored === "followers" || stored === "private") return stored;
@@ -198,6 +200,14 @@ export default function Post({ post }: { post: PostType }) {
   const topComment = interaction.comments[0];
   const mediaSource = resolveMediaSource(post.video || post.image);
   const hasVideo = !!post.video || isVideoSource(mediaSource || post.image);
+  const directVideoSrc =
+    mediaSource && (mediaSource.startsWith("blob:") || mediaSource.startsWith("data:"))
+      ? mediaSource
+      : undefined;
+  const resolvedVideoSrc =
+    directVideoSrc ||
+    (resolvedVideo?.source === mediaSource ? resolvedVideo?.url : undefined) ||
+    mediaSource;
 
   const currentUser = useMemo(() => localStorage.getItem("route-posts-username") || "You", []);
   const currentPhoto = useMemo(() => localStorage.getItem("route_profile_avatar") || undefined, []);
@@ -261,6 +271,30 @@ export default function Post({ post }: { post: PostType }) {
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [previewImage]);
+
+  useEffect(() => {
+    if (!hasVideo || !mediaSource) return;
+    if (mediaSource.startsWith("blob:") || mediaSource.startsWith("data:")) return;
+
+    let active = true;
+    let objectUrl: string | null = null;
+
+    const run = async () => {
+      try {
+        const response = await apiClient.get(mediaSource, { responseType: "blob" });
+        objectUrl = URL.createObjectURL(response.data as Blob);
+        if (active) setResolvedVideo({ source: mediaSource, url: objectUrl });
+      } catch {
+        if (active) setResolvedVideo({ source: mediaSource, url: mediaSource });
+      }
+    };
+
+    void run();
+    return () => {
+      active = false;
+      if (objectUrl) URL.revokeObjectURL(objectUrl);
+    };
+  }, [hasVideo, mediaSource]);
 
   useEffect(() => {
     if (!menuOpen) return;
@@ -624,7 +658,13 @@ export default function Post({ post }: { post: PostType }) {
       {mediaSource && (
         <div className="border-t border-b border-[#dbe6f5]">
           {hasVideo ? (
-            <video src={mediaSource} className="h-auto w-full bg-black object-contain" controls playsInline />
+            <video
+              src={resolvedVideoSrc || mediaSource}
+              className="h-auto w-full bg-black object-contain"
+              controls
+              playsInline
+              preload="metadata"
+            />
           ) : (
             <button
               type="button"

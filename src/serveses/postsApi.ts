@@ -113,9 +113,11 @@ const normalizePosts = (payload: unknown): PostType[] => {
       media?.video_url,
       raw.file
     );
+    const mediaType = firstString(raw.mediaType, raw.type, raw.mimeType, media?.type)?.toLowerCase() || "";
+    const isVideoByType = mediaType.includes("video");
 
-    const image = toAbsoluteMediaUrl(imageCandidate);
-    const video = toAbsoluteMediaUrl(videoCandidate);
+    const image = isVideoByType ? undefined : toAbsoluteMediaUrl(imageCandidate);
+    const video = toAbsoluteMediaUrl(videoCandidate || (isVideoByType ? imageCandidate : undefined));
     const privacyRaw = firstString(raw.privacy, raw.visibility, raw.audience);
     const privacy =
       privacyRaw === "private" || privacyRaw === "followers" || privacyRaw === "public"

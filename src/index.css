@@ -1,0 +1,19 @@
+@import "tailwindcss";
+@import "@heroui/styles";
+
+@theme {
+--color-second: #f0f2f5;
+--color-main: #001f68;
+--font-sans: "Titillium Web", ui-sans-serif, system-ui, sans-serif;
+}
+
+body {
+  margin: 0;
+  background: #f0f2f5;
+  color: #0f172a;
+  font-family: "Titillium Web", ui-sans-serif, system-ui, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}

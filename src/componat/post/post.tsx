@@ -107,6 +107,7 @@ export default function Post({ post }: { post: PostType }) {
   const [sendingComment, setSendingComment] = useState(false);
   const [sendingLike, setSendingLike] = useState(false);
   const [sharing, setSharing] = useState(false);
+  const [previewImage, setPreviewImage] = useState<string | null>(null);
 
   const baseLikes = post.likesCount ?? 0;
   const baseComments = post.commentsCount ?? 0;
@@ -157,6 +158,17 @@ export default function Post({ post }: { post: PostType }) {
       active = false;
     };
   }, [showComments, isLocalPost, apiCommentsLoaded, post._id, persist]);
+
+  useEffect(() => {
+    if (!previewImage) return;
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setPreviewImage(null);
+      }
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [previewImage]);
 
   async function handleLike() {
     if (sendingLike) return;
@@ -244,7 +256,8 @@ export default function Post({ post }: { post: PostType }) {
   }
 
   return (
-    <article id={`post-${post._id}`} className="overflow-hidden rounded-[14px] border border-[#dbe6f5] bg-white shadow-[0_2px_10px_rgba(15,23,42,0.06)]">
+    <>
+      <article id={`post-${post._id}`} className="overflow-hidden rounded-[14px] border border-[#dbe6f5] bg-white shadow-[0_2px_10px_rgba(15,23,42,0.06)]">
       <header className="flex items-start justify-between p-4 pb-3">
         <div className="flex items-center gap-3">
           <div className="grid size-11 place-items-center overflow-hidden rounded-full bg-[#00298d] font-bold text-white">
@@ -284,7 +297,16 @@ export default function Post({ post }: { post: PostType }) {
 
       {post.image && (
         <div className="border-t border-b border-[#dbe6f5]">
-          <img src={post.image} alt="" className="h-auto w-full object-cover" />
+          <button
+            type="button"
+            onClick={() => {
+              if (post.image) setPreviewImage(post.image);
+            }}
+            className="block w-full cursor-zoom-in"
+            aria-label="Open image preview"
+          >
+            <img src={post.image} alt="" className="h-auto w-full object-cover" />
+          </button>
         </div>
       )}
 
@@ -383,6 +405,29 @@ export default function Post({ post }: { post: PostType }) {
           </div>
         )}
       </footer>
-    </article>
+      </article>
+
+      {previewImage && (
+        <div
+          className="fixed inset-0 z-[60] flex items-center justify-center bg-black/85 p-4"
+          onClick={() => setPreviewImage(null)}
+          role="presentation"
+        >
+          <button
+            type="button"
+            className="absolute top-4 right-4 rounded-full bg-white/15 px-3 py-1.5 text-sm font-bold text-white hover:bg-white/25"
+            onClick={() => setPreviewImage(null)}
+          >
+            Close
+          </button>
+          <img
+            src={previewImage}
+            alt="Post preview"
+            className="max-h-[92vh] w-auto max-w-full rounded-md object-contain"
+            onClick={(event) => event.stopPropagation()}
+          />
+        </div>
+      )}
+    </>
   );
 }

@@ -82,7 +82,27 @@ export default function Suggestions() {
   }
 
   return (
-    <aside className="rounded-2xl border border-[#dbe5f2] bg-white p-4 shadow-[0_1px_4px_rgba(15,23,42,0.1)]">
+    <>
+      <aside className="rounded-2xl border border-[#dbe5f2] bg-white p-3 shadow-[0_1px_4px_rgba(15,23,42,0.1)] lg:hidden">
+        <div className="flex items-center justify-between">
+          <h3 className="flex items-center gap-1.5 text-base font-extrabold text-[#1f2b45]">
+            <FriendsIcon />
+            Suggested Friends
+          </h3>
+          <div className="flex items-center gap-2">
+            <span className="rounded-full bg-[#edf2fb] px-2 py-0.5 text-xs font-bold text-[#64748b]">{filtered.length}</span>
+            <button
+              type="button"
+              onClick={() => navigate("/suggested-friends")}
+              className="text-sm font-bold text-[#2563eb]"
+            >
+              Show
+            </button>
+          </div>
+        </div>
+      </aside>
+
+      <aside className="hidden rounded-2xl border border-[#dbe5f2] bg-white p-4 shadow-[0_1px_4px_rgba(15,23,42,0.1)] lg:block">
       <div className="mb-3 flex items-center justify-between">
         <h3 className="flex items-center gap-1.5 text-base font-extrabold text-[#1f2b45]">
           <FriendsIcon />
@@ -148,6 +168,7 @@ export default function Suggestions() {
       >
         View more
       </button>
-    </aside>
+      </aside>
+    </>
   );
 }

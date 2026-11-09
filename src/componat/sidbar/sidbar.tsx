@@ -38,7 +38,8 @@ function SaveIcon() {
   );
 }
 
-const itemClass = "flex w-full items-center gap-3 rounded-xl px-3 py-2 text-[15px] font-semibold transition";
+const itemClass =
+  "flex w-full items-center justify-center gap-2 rounded-xl px-3 py-2 text-[15px] font-semibold transition lg:justify-start lg:gap-3";
 
 export default function Sidebar() {
   const navigate = useNavigate();
@@ -83,7 +84,7 @@ export default function Sidebar() {
 
   return (
     <aside className="rounded-2xl border border-[#dfe6f2] bg-white p-3 shadow-[0_1px_4px_rgba(15,23,42,0.12)]">
-      <ul className="space-y-1">
+      <ul className="grid grid-cols-2 gap-2 lg:grid-cols-1 lg:gap-1">
         <li>
           <button
             type="button"
@@ -118,7 +119,8 @@ export default function Sidebar() {
                 </span>
               )}
             </span>
-            <span>Notifications</span>
+            <span className="hidden md:inline lg:hidden">Community</span>
+            <span className="md:hidden lg:inline">Notifications</span>
           </button>
         </li>
         <li>

@@ -109,11 +109,14 @@ export default function NewFitness() {
   }
 
   return (
-    <div className="grid gap-4 lg:grid-cols-[200px_minmax(0,1fr)_240px] xl:grid-cols-[210px_minmax(0,1fr)_260px]">
-      <div className="self-start lg:sticky lg:top-20">
+    <div className="grid gap-4 lg:grid-cols-[200px_minmax(0,1fr)_260px] xl:grid-cols-[210px_minmax(0,1fr)_280px]">
+      <div className="order-1 self-start lg:sticky lg:top-20">
         <Sidebar />
       </div>
-      <section className="mx-auto w-full max-w-170 space-y-3">
+      <div className="order-2 self-start lg:order-3 lg:sticky lg:top-20">
+        <Suggestions />
+      </div>
+      <section className="order-3 mx-auto w-full max-w-[680px] space-y-3 lg:order-2">
         <form onSubmit={submit} className="rounded-2xl border border-[#dbe3f1] bg-white p-3 shadow-sm">
           <div className="mb-3 flex items-center gap-3">
             {profilePhoto ? (
@@ -183,9 +186,6 @@ export default function NewFitness() {
           <Post key={p._id} post={p} />
         ))}
       </section>
-      <div className="self-start lg:sticky lg:top-20">
-        <Suggestions />
-      </div>
     </div>
   );
 }

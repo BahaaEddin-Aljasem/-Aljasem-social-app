@@ -100,22 +100,32 @@ type CreatePostInput =
       body: string;
       imageDataUrl?: string;
       imageFile?: File;
-      privacy?: "public" | "private";
+      mediaDataUrl?: string;
+      mediaFile?: File;
+      mediaType?: "image" | "video";
+      privacy?: "public" | "private" | "followers";
     };
 
 export const createPost = async (input: CreatePostInput): Promise<PostType> => {
   const payload = typeof input === "string" ? { body: input } : input;
   const text = payload.body.trim();
+  const selectedDataUrl = payload.mediaDataUrl || payload.imageDataUrl;
+  const selectedFile = payload.mediaFile || payload.imageFile;
+  const selectedType: "image" | "video" =
+    payload.mediaType ||
+    (selectedFile?.type.startsWith("video/") || selectedDataUrl?.startsWith("data:video/")
+      ? "video"
+      : "image");
 
   const formData = new FormData();
   formData.append("body", text);
   formData.append("privacy", payload.privacy || "public");
 
-  if (payload.imageFile) {
-    formData.append("image", payload.imageFile);
-  } else if (payload.imageDataUrl) {
-    const file = await dataUrlToFile(payload.imageDataUrl);
-    formData.append("image", file);
+  if (selectedFile) {
+    formData.append(selectedType === "video" ? "video" : "image", selectedFile);
+  } else if (selectedDataUrl) {
+    const file = await dataUrlToFile(selectedDataUrl);
+    formData.append(selectedType === "video" ? "video" : "image", file);
   }
 
   try {
@@ -134,7 +144,8 @@ export const createPost = async (input: CreatePostInput): Promise<PostType> => {
   const newPost: PostType = {
     _id: `local-${Date.now()}`,
     body: text,
-    image: payload.imageDataUrl || undefined,
+    image: selectedType === "image" ? selectedDataUrl || undefined : undefined,
+    video: selectedType === "video" ? selectedDataUrl || undefined : undefined,
     privacy: payload.privacy || "public",
     user: {
       _id: localUserId,

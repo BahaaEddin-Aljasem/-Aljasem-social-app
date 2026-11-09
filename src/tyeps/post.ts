@@ -9,6 +9,7 @@ export interface PostType {
   _id: string;
   body?: string;
   image?: string;
+  video?: string;
   privacy?: "public" | "followers" | "private";
   user: PostUser;
   createdAt: string;

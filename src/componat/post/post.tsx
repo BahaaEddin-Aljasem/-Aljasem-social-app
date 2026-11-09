@@ -88,6 +88,12 @@ function formatRelativeTime(dateString: string): string {
   return `${Math.floor(diff / month)}mo`;
 }
 
+function isVideoSource(url?: string): boolean {
+  if (!url) return false;
+  if (url.startsWith("data:video/")) return true;
+  return /\.(mp4|webm|ogg|mov|m4v)(\?|#|$)/i.test(url);
+}
+
 function LikeIcon() {
   return (
     <svg viewBox="0 0 24 24" className="size-4" fill="none">
@@ -178,6 +184,8 @@ export default function Post({ post }: { post: PostType }) {
   const commentsCount = Math.max(baseComments, interaction.comments.length);
   const sharesCount = Math.max(0, baseShares + interaction.sharesDelta);
   const topComment = interaction.comments[0];
+  const mediaSource = post.video || post.image;
+  const hasVideo = !!post.video || isVideoSource(post.image);
 
   const currentUser = useMemo(() => localStorage.getItem("route-posts-username") || "You", []);
   const currentPhoto = useMemo(() => localStorage.getItem("route_profile_avatar") || undefined, []);
@@ -601,18 +609,22 @@ export default function Post({ post }: { post: PostType }) {
 
       {postBody && <p className="px-4 pb-3 text-[16px] leading-7 text-[#0f172a]">{postBody}</p>}
 
-      {post.image && (
+      {mediaSource && (
         <div className="border-t border-b border-[#dbe6f5]">
-          <button
-            type="button"
-            onClick={() => {
-              if (post.image) setPreviewImage(post.image);
-            }}
-            className="block w-full cursor-zoom-in"
-            aria-label="Open image preview"
-          >
-            <img src={post.image} alt="" className="h-auto w-full object-cover" />
-          </button>
+          {hasVideo ? (
+            <video src={mediaSource} className="h-auto w-full bg-black object-contain" controls playsInline />
+          ) : (
+            <button
+              type="button"
+              onClick={() => {
+                if (mediaSource) setPreviewImage(mediaSource);
+              }}
+              className="block w-full cursor-zoom-in"
+              aria-label="Open image preview"
+            >
+              <img src={mediaSource} alt="" className="h-auto w-full object-cover" />
+            </button>
+          )}
         </div>
       )}
 

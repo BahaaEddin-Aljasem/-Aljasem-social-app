@@ -46,13 +46,15 @@ function SendIcon() {
 }
 
 type PrivacyOption = "Public" | "Followers" | "Only me";
+type MediaType = "image" | "video" | null;
 
 export default function NewFitness() {
   const [posts, setPosts] = useState<PostType[]>([]);
   const [loading, setLoading] = useState(true);
   const [body, setBody] = useState("");
-  const [imageDataUrl, setImageDataUrl] = useState("");
-  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [mediaDataUrl, setMediaDataUrl] = useState("");
+  const [mediaFile, setMediaFile] = useState<File | null>(null);
+  const [mediaType, setMediaType] = useState<MediaType>(null);
   const [privacy, setPrivacy] = useState<PrivacyOption>("Public");
   const [submitting, setSubmitting] = useState(false);
   const displayName = localStorage.getItem("route-posts-username") || "bahaaeddin";
@@ -75,18 +77,20 @@ export default function NewFitness() {
 
   async function submit(e: React.FormEvent) {
     e.preventDefault();
-    if (!body.trim() && !imageDataUrl) return;
+    if (!body.trim() && !mediaDataUrl) return;
     setSubmitting(true);
     try {
       await createPost({
         body: body.trim(),
-        imageDataUrl: imageDataUrl || undefined,
-        imageFile: imageFile || undefined,
+        mediaDataUrl: mediaDataUrl || undefined,
+        mediaFile: mediaFile || undefined,
+        mediaType: mediaType || undefined,
         privacy: privacy === "Only me" ? "private" : "public",
       });
       setBody("");
-      setImageDataUrl("");
-      setImageFile(null);
+      setMediaDataUrl("");
+      setMediaFile(null);
+      setMediaType(null);
       toast.success("Post created");
       await load();
     } catch {
@@ -96,14 +100,15 @@ export default function NewFitness() {
     }
   }
 
-  function handleImageChange(e: React.ChangeEvent<HTMLInputElement>) {
+  function handleMediaChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
     if (!file) return;
-    setImageFile(file);
+    setMediaFile(file);
+    setMediaType(file.type.startsWith("video/") ? "video" : "image");
     const reader = new FileReader();
     reader.onload = () => {
       const result = typeof reader.result === "string" ? reader.result : "";
-      setImageDataUrl(result);
+      setMediaDataUrl(result);
     };
     reader.readAsDataURL(file);
   }
@@ -149,9 +154,13 @@ export default function NewFitness() {
             className="w-full resize-none rounded-xl border border-[#dbe3f1] bg-[#f8faff] p-3 text-sm outline-none transition focus:border-[#2563eb]"
             rows={4}
           />
-          {imageDataUrl && (
+          {mediaDataUrl && (
             <div className="mt-2 overflow-hidden rounded-xl border border-[#dbe3f1]">
-              <img src={imageDataUrl} alt="Meme preview" className="max-h-96 w-full object-cover" />
+              {mediaType === "video" ? (
+                <video src={mediaDataUrl} className="max-h-96 w-full bg-black object-contain" controls playsInline />
+              ) : (
+                <img src={mediaDataUrl} alt="Media preview" className="max-h-96 w-full object-cover" />
+              )}
             </div>
           )}
           <div className="mt-3 flex items-center justify-between border-t border-[#edf1f7] pt-2">
@@ -159,7 +168,7 @@ export default function NewFitness() {
               <label className="inline-flex cursor-pointer items-center gap-1.5 rounded-md px-2 py-1 hover:bg-[#f1f5ff]">
                 <ImageIcon />
                 <span className="text-sm text-slate-600">Photo/video</span>
-                <input type="file" accept="image/*" onChange={handleImageChange} className="hidden" />
+                <input type="file" accept="image/*,video/*" onChange={handleMediaChange} className="hidden" />
               </label>
               <button type="button" className="inline-flex items-center gap-1.5 rounded-md px-2 py-1 hover:bg-[#f1f5ff]">
                 <FeelingIcon />
@@ -168,7 +177,7 @@ export default function NewFitness() {
             </div>
             <button
               type="submit"
-              disabled={submitting || (!body.trim() && !imageDataUrl)}
+              disabled={submitting || (!body.trim() && !mediaDataUrl)}
               className="inline-flex items-center gap-1.5 rounded-lg bg-[#5b9df7] px-5 py-1.5 text-sm font-semibold text-white transition hover:bg-[#3f87ed] disabled:opacity-50"
             >
               {submitting ? "Posting..." : "Post"}
